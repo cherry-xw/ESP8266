@@ -1,9 +1,22 @@
 
 #include <ESP8266WiFi.h>
+// 网页服务器，用于接收发送请求
 #include <ESP8266WebServer.h>
+// 用于格式化JSON字符串
 #include <ArduinoJson.h>
+// 用于存放成功登陆的WiFi信息，在重启时直接使用该信息，而不再需要重新配置
 #include <EEPROM.h>
+// 用于将网页信息等存放到SPIFFS文件系统中，让网页信息不再是拼接字符串获取
+// https://www.arduino.cn/thread-81675-1-1.html
+// https://swf.com.tw/?p=905
 #include <FS.h>
+
+// 基础Arduino函数说明
+// https://arduino-wiki.clz.me/?file=001-%E6%95%B0%E5%AD%97%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA/002-digitalWrite
+// dalao的帖子合集
+// https://www.arduino.cn/home.php?mod=space&uid=93655&do=thread&view=me&type=reply&order=dateline&from=space
+// Arduino引脚说明
+// http://www.cnblogs.com/kekeoutlook/p/10165195.html
 
 ESP8266WebServer server(80);
 
@@ -11,6 +24,7 @@ boolean led = false; // 状态信号灯状态
 
 void setup() {
   Serial.begin(115200);
+  SPIFFS.begin(); // 启用SPIFFS文档系统
   delay(500);
   Serial.println();
   pinMode(LED_BUILTIN, OUTPUT);
@@ -36,15 +50,13 @@ void APConfigWiFi () {
   }else{
     Serial.println("Failed!");
   }
-  server.on("/", HTTP_ANY, []() {
-    server.send(200, "text/html", "<!DOCTYPE html><head><meta charset=utf8 /><title>登录</title></head><body><div><label for=ssid>SSID:</label><input id=ssid /></div><div><label for=pwd>pwd:</label><input id=pwd /></div><div><button onclick=displayDate()>确定</button></div><script>var oAjax = null;try{oAjax = new XMLHttpRequest();}catch(e){oAjax = new ActiveXObject('Microsoft.XMLHTTP');}function displayDate(){var postData = '{\"pwd\":\"'+document.getElementById('pwd').value+'\",\"ssid\":\"'+document.getElementById('ssid').value+'\"}';oAjax.open('post','http://192.168.8.1/config?='+Math.random(),true);oAjax.setRequestHeader('Content-type','application/json');oAjax.send(postData);}oAjax.onreadystatechange = function(){if(oAjax.readyState == 4){try{alert(oAjax.responseText);}catch(e){alert('你访问的页面出错了');};};}</script></body></html>");
-  });
+  server.on("/", [](){WebHTML("/index.html");});
   server.on("/config", HTTP_POST, []() {
     if (server.hasArg("plain")) {
-      char* reqJSON = (char*)server.arg("plain").c_str(); // 接收json数据
+      String reqJSON = server.arg("plain"); // 接收json数据
       Serial.println(reqJSON);
-      StaticJsonDocument<200> doc; // 创建格式化后的json对象
-      DeserializationError err = deserializeJson(doc, reqJSON); // 格式化json操作，返回错误信息
+      StaticJsonDocument<100> doc; // 创建格式化后的json对象
+      DeserializationError err = deserializeJson(doc, reqJSON.c_str()); // 格式化json操作，返回错误信息
       if (err) { // 如果出错，直接退出
         String strErr = err.c_str();
         Serial.println("ERROR: "+strErr);
@@ -82,8 +94,15 @@ void APConfigWiFi () {
   }
 }
 
+// 获取文件系统中的网页文件
+void WebHTML(String path) {
+  File file = SPIFFS.open(path, "r");
+  server.streamFile(file, "text/html");
+  file.close();
+}
+
 boolean connectWiFi (String ssid, String pwd) {
-  WiFi.begin(ssid, pwd);
+  WiFi.begin(ssid.c_str(), pwd.c_str());
   int timeout  = 0;
   while (WiFi.status() != WL_CONNECTED && timeout < 40) {
     timeout++;

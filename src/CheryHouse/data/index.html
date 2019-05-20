@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+
+<head>
+	<meta charset=utf8 />
+	<title>登录</title>
+</head>
+<!-- 完善配置页样式 -->
+<!-- 根据响应json完善提醒 -->
+<body>
+	<div>
+		<label for=ssid>SSID:</label>
+		<input id=ssid />
+	</div>
+	<div>
+		<label for=pwd>pwd:</label>
+		<input id=pwd />
+	</div>
+	<div>
+		<button onclick=displayDate()>确定</button>
+	</div>
+	<script>
+		var oAjax = null;
+		try { oAjax = new XMLHttpRequest(); }
+		catch (e) { oAjax = new ActiveXObject('Microsoft.XMLHTTP'); }
+		function displayDate() {
+			var postData = "{\"pwd\": \""+document.getElementById('pwd').value+"\",\"ssid\": \""+document.getElementById('ssid').value+"\"}"
+			oAjax.open('post', 'http://192.168.8.1/config?=' + Math.random(), true);
+			oAjax.setRequestHeader('Content-type', 'application/json');
+			oAjax.send(postData);
+		}
+		oAjax.onreadystatechange = function () {
+			if (oAjax.readyState == 4) {
+				try { alert(oAjax.responseText) }
+				catch (e) { alert('你访问的页面出错了') }
+			}
+		}
+	</script>
+</body>
+
+</html>
