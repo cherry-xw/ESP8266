@@ -45,6 +45,9 @@
 
   Ardunio与计算机通信最常用的方式就是串口通信。在Arduino控制器上，串口都是位于Rx和Tx两个引脚
   
-  [参考文章](https://www.arduino.cn/thread-82353-1-1.html)
+### 参考文章
+  dalao文章
+  [单片机菜鸟](https://www.arduino.cn/thread-82353-1-1.html)
+  [奈何col](https://www.arduino.cn/forum.php?mod=viewthread&tid=1066&extra=page%3D1)
 # ESP8266项目简介
 # ESP8266
