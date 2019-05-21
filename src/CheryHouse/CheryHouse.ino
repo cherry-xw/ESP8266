@@ -24,9 +24,12 @@ boolean led = false; // 状态信号灯状态
 
 void setup() {
   Serial.begin(115200);
-  SPIFFS.begin(); // 启用SPIFFS文档系统
   delay(500);
+  SPIFFS.begin(); // 启用SPIFFS文档系统
   Serial.println();
+  String a = "Ab_-+!@#$%^&*(){}";
+  byte[] a1 = a.geBytes("UTF-8");
+  Serial.println(a1);
   pinMode(LED_BUILTIN, OUTPUT);
   APConfigWiFi();
   WiFi.printDiag(Serial);
@@ -45,7 +48,8 @@ void APConfigWiFi () {
   IPAddress subnet(255,255,255,0);
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAPConfig(local_IP, gateway, subnet);
-  if(WiFi.softAP("config_wifi")){
+  String wifiName = String("config_wifi_") + random(10000,99999);
+  if(WiFi.softAP(wifiName.c_str())){
     Serial.println("Ready");
   }else{
     Serial.println("Failed!");
@@ -75,7 +79,7 @@ void APConfigWiFi () {
 //      如果配置失败，那么就会重新回到快速闪烁状态
 //      配置成功，指示灯慢闪
       server.send(200, "application/json", "{\"msg\":\"start config\",\"status\":\"success\"}");
-      if (connectWiFi(ssid, pwd)) { // 连接成功
+      if (connectWiFi(ssid.c_str(), pwd.c_str())) { // 连接成功
         delay(1000);
         server.stop();
         WiFi.mode(WIFI_STA); // 在成功之后切换模式，防止通讯中断
@@ -101,8 +105,8 @@ void WebHTML(String path) {
   file.close();
 }
 
-boolean connectWiFi (String ssid, String pwd) {
-  WiFi.begin(ssid.c_str(), pwd.c_str());
+boolean connectWiFi (char* ssid, char* pwd) {
+  WiFi.begin(ssid, pwd);
   int timeout  = 0;
   while (WiFi.status() != WL_CONNECTED && timeout < 40) {
     timeout++;
@@ -113,10 +117,19 @@ boolean connectWiFi (String ssid, String pwd) {
     Serial.println(F("WiFi connected"));
     Serial.print("current IP is ");
     Serial.println(WiFi.localIP().toString());
+    
+    
     return true;
   } else {
     WiFi.disconnect();
     Serial.println(F("connect timeout"));
     return false;
+  }
+}
+
+void saveEEPROM(int len, byte* content) {
+  EEPROM.begin(len); // 最长32位ssid，16位pwd
+  for(int i = 0; i < len; i++){
+    
   }
 }
