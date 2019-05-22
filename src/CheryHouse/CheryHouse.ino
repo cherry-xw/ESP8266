@@ -24,20 +24,22 @@ boolean led = false; // 状态信号灯状态
 
 void setup() {
   Serial.begin(115200);
-  delay(500);
   SPIFFS.begin(); // 启用SPIFFS文档系统
   Serial.println();
-  String a = "Ab_-+!@#$%^&*(){}";
-  byte[] a1 = a.geBytes("UTF-8");
-  Serial.println(a1);
   pinMode(LED_BUILTIN, OUTPUT);
+//  if判断EEPROM中是否有wifi信息，并尝试逐个联网，当全部尝试连接失败后，让用户配置联网
   APConfigWiFi();
   WiFi.printDiag(Serial);
+//  当前wifi已经连接成功后，重启ESP
+  ESP.restart()
+  server.on("/", [](){server.send(200, "application/json", "{\"msg\":\"eeee\",\"status\":\"successss\"}");});
+  server.on("/d", [](){WebHTML("/index.html");});
 }
 
 void loop() {
   delay(500);
   led = !led;
+  server.handleClient();
   digitalWrite(LED_BUILTIN, led);
 }
 
@@ -81,7 +83,6 @@ void APConfigWiFi () {
       server.send(200, "application/json", "{\"msg\":\"start config\",\"status\":\"success\"}");
       if (connectWiFi(ssid.c_str(), pwd.c_str())) { // 连接成功
         delay(1000);
-        server.stop();
         WiFi.mode(WIFI_STA); // 在成功之后切换模式，防止通讯中断
         status = true;
       } else { // 连接超时
@@ -105,7 +106,7 @@ void WebHTML(String path) {
   file.close();
 }
 
-boolean connectWiFi (char* ssid, char* pwd) {
+boolean connectWiFi (const char* ssid, const char* pwd) {
   WiFi.begin(ssid, pwd);
   int timeout  = 0;
   while (WiFi.status() != WL_CONNECTED && timeout < 40) {
@@ -125,6 +126,31 @@ boolean connectWiFi (char* ssid, char* pwd) {
     Serial.println(F("connect timeout"));
     return false;
   }
+}
+
+void ScanWiFi () {
+  server.on("/scan", HTTP_GET, [](){
+    int n = WiFi.scanNetworks();
+    Serial.println("scan done");
+    if (n == 0) {
+      server.send(200, "application/json", "{\"msg\":\"around no wifi\",\"status\":\"error\"}");
+      Serial.println("no networks found");
+    } else {
+      Serial.print(n);
+      Serial.println(" networks found");
+      for (int i = 0; i < n; ++i) {
+        // Print SSID and RSSI for each network found
+        Serial.print(i + 1);
+        Serial.print(": ");
+        Serial.print(WiFi.SSID(i));
+        Serial.print(" (");
+        Serial.print(WiFi.RSSI(i));
+        Serial.print(")");
+        Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*");
+        delay(10);
+      }
+    }
+  })
 }
 
 void saveEEPROM(int len, byte* content) {

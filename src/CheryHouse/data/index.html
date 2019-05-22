@@ -150,11 +150,13 @@
 			margin-top: 1.8rem;
 			width: 6rem;
 			height: 5rem;
-			background: #e3fff879;
+			background: linear-gradient(#eafcf709, #eafcf7 70%);
+			border-radius: 0.08rem;
 			text-align: center;
 		}
 
 		.wapper>.loading>.spinner {
+			display: inline-block;
 			border: 2px solid #19A5DF;
 			border-radius: 0;
 			-webkit-animation: rotate 3s infinite;
@@ -184,6 +186,19 @@
 			height: 22px;
 			-webkit-animation: rotate 2s infinite;
 			animation: rotate 2s infinite;
+		}
+		.wapper>.loading>.mg-box{
+			margin-top: 0.5rem;
+			color: #888;
+			letter-spacing: 0.1em;
+		}
+		.wapper>.loading>.mg-box>.title{
+			display: inline-block;
+			color: #1f1f1fb4;
+			font-size: 0.4rem;
+			font-weight: 600;
+			text-shadow: 0.02rem 0.02rem 0.1rem rgb(218, 218, 218);
+			letter-spacing:0.2em;
 		}
 
 		@media screen and (min-width: 600px) {
@@ -220,7 +235,20 @@
 	</div>
 	<div class="wapper show">
 		<div class="loading">
-			<div class=spinner>
+			<div class=spinner></div>
+			<div class=mg-box>
+				<div class=title>请稍等...</div>
+			</div>
+			<div class=mg-box>
+				<!-- 添加翻转效果 -->
+				<div class="msg">注入灵魂</div>
+				<div class="msg">萌即是正义</div>
+				<div class="msg">萝莉有三好：</div>
+				<div class="msg">身轻体柔易推倒</div>
+				<div class="msg">胸不平何以平天下</div>
+				<div class="msg">乳不巨何以聚人心</div>
+				<div class="msg">报告：前方核能预警</div>
+				<div class="msg">任天堂才是世界的主宰</div>
 			</div>
 		</div>
 	</div>
