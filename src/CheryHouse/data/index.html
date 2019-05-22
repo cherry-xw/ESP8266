@@ -2,38 +2,255 @@
 
 <head>
 	<meta charset=utf8 />
+	<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 	<title>登录</title>
+	<style>
+		@charset "utf-8";html{background-color:#fff;color:#000;font-size:12px}
+		textarea{overflow:auto;resize:vertical}
+		input,textarea,button,select,a{outline:0 none;border: none;}
+		button::-moz-focus-inner,input::-moz-focus-inner{padding:0;border:0}
+		html {overflow-x: hidden;height: 100%;font-size: 50px;-webkit-tap-highlight-color: transparent;background: rgb(235, 255, 251)}
+		body {font-family: Arial, "Microsoft Yahei", "Helvetica Neue", Helvetica, sans-serif;color: #333;font-size: .28em;line-height: 1;-webkit-text-size-adjust: none;margin: 0;text-align: center;}
+		@keyframes rotate{
+			from {
+				transform: rotate(0);
+			}
+			to {
+				transform: rotate(360deg);
+			}
+		}
+		.container {
+			width: 4rem;
+			display: inline-block;
+		}
+		.in-wapper {
+			margin-top:0.2rem;
+			color: #999;
+			height:0.56rem;
+			display: flex;
+		}
+		.box {
+			line-height: 0.36rem;
+			font-size:0.3rem;
+			padding: 0.08rem 0.1rem;
+			border-radius:0.1rem;
+			background: rgb(192, 255, 245);
+			flex: 1;
+		}
+		.logo {
+			width: 2rem;
+			margin-top: 1.2rem;
+		}
+		.btn {
+			flex: 1;
+			user-select: none;
+			border-radius:0.1rem;
+			background: rgb(114, 248, 226);
+			color: #444;
+		}
+		.btn:active {
+			background: rgb(42, 253, 218);
+			box-shadow: 0 0 0.04rem #ccc;
+		}
+		.wapper{
+			width: 100%;
+			height: 100%;
+			position: fixed;
+			background: #00000015;
+			justify-content: space-around;
+			display: none;
+		}
+		.wapper.show {
+			display: flex;
+		}
+		.wapper>.toast {
+			display: inline-block;
+			border-radius: 0.1rem;
+			border: 0.02rem solid #ccc;
+			box-shadow: 0 0 0.2rem #aaa;
+			background: rgb(235, 252, 249);
+			width: 6rem;
+			height: 4rem;
+			margin-top: -4.4rem;
+			padding:0.1rem;
+			transition: margin-top ease-in-out 0.5s;
+		}
+		.wapper>.toast.show {
+			margin-top: 1.8rem;
+		}
+		.wapper>.toast>.title{
+			font-size: 0.4rem;
+			margin: 0.06rem 0;
+		}
+		.wapper>.toast>.msg{
+			font-size: 0.32rem;
+			margin-top: 0.1rem;
+			color: #666;
+		}
+		.wapper>.toast>.sub-msg{
+			font-size: 0.3rem;
+			margin-top: 0.1rem;
+			color: #888;
+		}
+		.wapper>.loading {
+			display: inline-block;
+			margin-top: 1.8rem;
+			width: 6rem;
+			height: 5rem;
+			background: #e3fff879;
+			text-align: center;
+		}
+		.wapper>.loading>.spinner {
+			border: 2px solid #19A5DF;
+			border-radius: 0;
+			-webkit-animation: rotate 3s infinite;
+			animation: rotate 3s infinite;
+			width: 46px;
+			height: 46px;
+		}
+		.wapper>.loading>.spinner:after, .wapper>.loading>.spinner:before {
+			content: '';
+			position: absolute;
+			left: 5px;
+			top: 5px;
+			width: 32px;
+			height: 32px;
+			border: 2px solid #FEB825;
+			-webkit-animation: rotate 3s infinite reverse;
+			animation: rotate 3s infinite reverse;
+		}
+		.wapper>.loading>.spinner:before {
+			border-color: #fff;
+			left: 10px;
+			top: 10px;
+			width: 22px;
+			height: 22px;
+			-webkit-animation: rotate 2s infinite;
+			animation: rotate 2s infinite;
+		}
+		@media screen and (min-width: 600px) {
+			.toast-wapper>.toast {
+				width: 9rem;
+				height: 6rem;
+				padding:0.3rem;
+				margin-top: -6.4rem;
+			}
+			.toast-wapper>.toast>.title{
+				font-size: 0.6rem;
+				margin: 0.12rem 0;
+			}
+			.toast-wapper>.toast>.msg{
+				font-size: 0.5rem;
+				margin-top: 0.2rem;
+			}
+			.toast-wapper>.toast>.sub-msg{
+				font-size: 0.4rem;
+				margin-top: 0.16rem;
+			}
+		}
+	</style>
 </head>
 <!-- 完善配置页样式 -->
 <!-- 根据响应json完善提醒 -->
 <!-- 检测当前是否已经联网，如果联网，表示AP网络已经关闭，手机重新连接到了wifi，那么也就可以确定当前已经完成了wifi配置 -->
 <body>
-	<div>
-		<label for=ssid>SSID:</label>
-		<input id=ssid />
+	<div class=wapper onclick=toggleToast()>
+		<div class=toast>
+			<div class=title>提示</div>
+			<hr>
+			<div class=sub-msg id=subMsg></div>
+			<div class=msg id=responseMsg>...</div>
+		</div>
 	</div>
-	<div>
-		<label for=pwd>pwd:</label>
-		<input id=pwd />
+	<div class="wapper show">
+		<div class="loading">
+			<div class=spinner>
+			</div>
+		</div>
 	</div>
-	<div>
-		<button onclick=displayDate()>确定</button>
+	<div class=container>
+		<img class=logo src=img/logo.jpg>
+		<div class=in-wapper>
+			<input class=box id=ssid placeholder=请输入账号>
+		</div>
+		<div class=in-wapper>
+			<input class=box id=pwd placeholder=请输入密码>
+		</div>
+		<div class=in-wapper>
+			<button class="box btn" onclick="toast('的啊发的阿斯蒂芬多少', '2234dsdff')">确定</button>
+		</div>
 	</div>
 	<script>
 		var oAjax = null;
-		try { oAjax = new XMLHttpRequest(); }
-		catch (e) { oAjax = new ActiveXObject('Microsoft.XMLHTTP'); }
-		function displayDate() {
-			var postData = "{\"pwd\": \""+document.getElementById('pwd').value+"\",\"ssid\": \""+document.getElementById('ssid').value+"\"}"
+		try { oAjax = new XMLHttpRequest() }
+		catch (e) { oAjax = new ActiveXObject('Microsoft.XMLHTTP') }
+		oAjax.onreadystatechange = function () {
+			if (oAjax.readyState == 4) {
+				try {
+					var res = oAjax.responseText
+					if (res) {
+						if (res.status == 'error') {
+							if (res.msg == 'ssid or password is empty') {
+								toast('用户名密码不能为空')
+							} else {
+								toast('上传配置数据解析失败', res.msg)
+							}
+						} else if (res.status == 'success'){
+							if (res.msg == 'start config') {
+								loading('请稍等')
+							}
+						}
+					} else {
+						toast('当前系统无返回', '如果蓝灯快速闪烁，请重新尝试提交信息')
+					}
+				} catch (e) { alert('你访问的页面出错了') }
+			}
+		}
+		function ajax (data) {
 			oAjax.open('post', 'http://192.168.8.1/config?=' + Math.random(), true);
 			oAjax.setRequestHeader('Content-type', 'application/json');
 			oAjax.send(postData);
 		}
-		oAjax.onreadystatechange = function () {
-			if (oAjax.readyState == 4) {
-				try { alert(oAjax.responseText) }
-				catch (e) { alert('你访问的页面出错了') }
+		function getStyle(element, attr){
+      if(element.currentStyle){
+        return element.currentStyle[attr];
+      }else{
+        return window.getComputedStyle(element,null)[attr];
+      }
+    }
+		function toggleToast(){
+			var wapper = document.getElementsByClassName('toast-wapper')[0]
+			var toast = document.getElementsByClassName('toast')[0]
+			if (arguments.length) {
+				if (arguments[0]) {
+					wapper.classList.add('show')
+					setTimeout(() => {
+						toast.classList.add('show')
+					}, 20)
+				} else {
+					toast.classList.remove('show')
+					setTimeout(() => {
+						wapper.classList.remove('show')
+					}, 500)
+				}
+			} else if (getStyle(wapper, 'display') == 'none') {
+				wapper.classList.add('show')
+				toast.classList.add('show')
+			} else {
+				toast.classList.remove('show')
+				setTimeout(() => {
+					wapper.classList.remove('show')
+				}, 500);
 			}
+		}
+		function displayData() {
+			var postData = "{\"pwd\": \""+document.getElementById('pwd').value+"\",\"ssid\": \""+document.getElementById('ssid').value+"\"}"
+			ajax(postData)
+		}
+		function toast (msg, subMsg) {
+			document.getElementById('responseMsg').innerText = msg
+			document.getElementById('subMsg').innerText = subMsg || ''
+			toggleToast(true)
 		}
 	</script>
 </body>
