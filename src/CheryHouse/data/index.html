@@ -51,12 +51,8 @@
 		}
 
 		@keyframes rotate {
-			from {
-				transform: rotate(0);
-			}
-			to {
-				transform: rotate(360deg);
-			}
+			from { transform: rotate(0); }
+			to { transform: rotate(360deg); }
 		}
 
 		.container {
@@ -121,7 +117,7 @@
 			height: 4rem;
 			margin-top: -4.4rem;
 			padding: 0.1rem;
-			transition: margin-top ease-in-out 0.5s;
+			transition: margin-top ease-in-out 0.4s;
 		}
 
 		.wapper>.toast.show {
@@ -147,12 +143,16 @@
 
 		.wapper>.loading {
 			display: inline-block;
-			margin-top: 1.8rem;
+			margin-top: -5.4rem;
 			width: 6rem;
 			height: 5rem;
 			background: linear-gradient(#eafcf709, #eafcf7 70%);
 			border-radius: 0.08rem;
 			text-align: center;
+			transition: margin-top ease-in-out 0.4s;
+		}
+		.wapper>.loading.show {
+			margin-top: 1.8rem;
 		}
 
 		.wapper>.loading>.spinner {
@@ -188,9 +188,7 @@
 			animation: rotate 2s infinite;
 		}
 		.wapper>.loading>.mg-box{
-			margin-top: 0.5rem;
-			color: #888;
-			letter-spacing: 0.1em;
+			margin-top: 0.4rem;
 		}
 		.wapper>.loading>.mg-box>.title{
 			display: inline-block;
@@ -199,6 +197,57 @@
 			font-weight: 600;
 			text-shadow: 0.02rem 0.02rem 0.1rem rgb(218, 218, 218);
 			letter-spacing:0.2em;
+		}
+		.wapper>.loading>.mg-box-lg {
+			margin-top: 0.7rem;
+			color: #888;
+			letter-spacing: 0.1em;
+			position: relative;
+			display: inline-block;
+			width: 4rem;
+			padding:0.2rem;
+			height: 0.4rem;
+			border: 0.02rem solid #aaa;
+		}
+		.wapper>.loading>.mg-box-lg>.msg-r{
+			font-size: 0.34rem;
+			height: 0.4rem;
+			width: 4rem;
+			text-align: center;
+			border: 0.02rem solid #ccc;
+			line-height: 0.4rem;
+			transform-origin: center center -0.2rem;
+			position: absolute;
+			display: none;
+			backface-visibility: hidden;
+		}
+		@keyframes rotateMsgIn {
+			0% { transform: rotateX(90deg); }
+			8% { transform: rotateX(105deg); }
+			100% { transform: rotateX(0); }
+		}
+		@keyframes rotateMsgOut {
+			0% { transform: rotateX(0); }
+			8% { transform: rotateX(15deg); }
+			100% { transform: rotateX(-90deg); }
+		}
+		@keyframes rotateMsgHide {
+			0% { transform: rotateX(-90deg);}
+			8% { transform: rotateX(-75deg); }
+			10% { transform: rotateX(-90deg);}
+			100% { transform: rotateX(-180deg); }
+		}
+		.wapper>.loading>.mg-box-lg>.msg-r.in{
+			animation: rotateMsgIn 1.8s forwards;
+			display: block;
+		}
+		.wapper>.loading>.mg-box-lg>.msg-r.out{
+			display: block;
+			animation: rotateMsgOut 1.8s forwards;
+		}
+		.wapper>.loading>.mg-box-lg>.msg-r.hide{
+			display: block;
+			animation: rotateMsgHide 1.8s forwards;
 		}
 
 		@media screen and (min-width: 600px) {
@@ -225,30 +274,27 @@
 </head>
 
 <body>
-	<div class=wapper onclick=toggleToast()>
-		<div class=toast>
+	<div class=wapper id=toastWapper onclick=toggleToast()>
+		<div class=toast id=toast>
 			<div class=title>提示</div>
 			<hr>
 			<div class=sub-msg id=subMsg></div>
 			<div class=msg id=responseMsg>...</div>
 		</div>
 	</div>
-	<div class="wapper show">
-		<div class="loading">
+	<div class=wapper id=loadWapper>
+		<div class=loading id=loading>
 			<div class=spinner></div>
 			<div class=mg-box>
 				<div class=title>请稍等...</div>
 			</div>
-			<div class=mg-box>
-				<!-- 添加翻转效果 -->
-				<div class="msg">注入灵魂</div>
-				<div class="msg">萌即是正义</div>
-				<div class="msg">萝莉有三好：</div>
-				<div class="msg">身轻体柔易推倒</div>
-				<div class="msg">胸不平何以平天下</div>
-				<div class="msg">乳不巨何以聚人心</div>
-				<div class="msg">报告：前方核能预警</div>
-				<div class="msg">任天堂才是世界的主宰</div>
+			<div class=mg-box-lg>
+				<div class="msg-r in">注入灵魂</div>
+				<div class=msg-r>萌即是正义</div>
+				<div class=msg-r>萝莉有三好</div>
+				<div class=msg-r>身轻体柔易推倒</div>
+				<div class="msg-r hide">胸不平何以平天下</div>
+				<div class="msg-r out">乳不巨何以聚人心</div>
 			</div>
 		</div>
 	</div>
@@ -265,33 +311,36 @@
 		</div>
 	</div>
 	<script>
-		var oAjax = null;
+		var oAjax = null,id=[]
 		try { oAjax = new XMLHttpRequest() }
 		catch (e) { oAjax = new ActiveXObject('Microsoft.XMLHTTP') }
 		oAjax.onreadystatechange = function () {
 			if (oAjax.readyState == 4) {
-				try {
-					var res = oAjax.responseText
-					if (res) {
-						if (res.status == 'error') {
-							if (res.msg == 'ssid or password is empty') {
-								toast('用户名密码不能为空')
-							} else {
-								toast('上传配置数据解析失败', res.msg)
+				setTimeout(() => {
+					loading(false)
+					try {
+						var res = oAjax.responseText
+						if (res) {
+							if (res.status == 'error') {
+								if (res.msg == 'ssid or password is empty') {
+									toast('用户名密码不能为空')
+								} else {
+									toast('上传配置数据解析失败', res.msg)
+								}
+							} else if (res.status == 'success') {
+								if (res.msg == 'start config') {
+									loading('请稍等')
+								}
 							}
-						} else if (res.status == 'success') {
-							if (res.msg == 'start config') {
-								loading('请稍等')
-							}
+						} else {
+							toast('当前系统无返回', '如果蓝灯快速闪烁，请重新尝试提交信息')
 						}
-					} else {
-						toast('当前系统无返回', '如果蓝灯快速闪烁，请重新尝试提交信息')
-					}
-				} catch (e) { alert('你访问的页面出错了') }
+					} catch (e) { alert('你访问的页面出错了') }
+				}, 8000)
 			}
 		}
-		function ajax(data) {
-			oAjax.open('post', 'http://192.168.8.1/config?=' + Math.random(), true);
+		function ajax({url, method, data}) {
+			oAjax.open(method, url, false, 'xchery', 'CONFIG_USER_CONNECT_WIFI');
 			oAjax.setRequestHeader('Content-type', 'application/json');
 			oAjax.send(postData);
 		}
@@ -303,8 +352,8 @@
 			}
 		}
 		function toggleToast() {
-			var wapper = document.getElementsByClassName('toast-wapper')[0]
-			var toast = document.getElementsByClassName('toast')[0]
+			var wapper = document.getElementById('toastWapper')
+			var toast = document.getElementById('toast')
 			if (arguments.length) {
 				if (arguments[0]) {
 					wapper.classList.add('show')
@@ -315,7 +364,7 @@
 					toast.classList.remove('show')
 					setTimeout(() => {
 						wapper.classList.remove('show')
-					}, 500)
+					}, 400)
 				}
 			} else if (getStyle(wapper, 'display') == 'none') {
 				wapper.classList.add('show')
@@ -327,14 +376,49 @@
 				}, 500);
 			}
 		}
-		function displayData() {
-			var postData = "{\"pwd\": \"" + document.getElementById('pwd').value + "\",\"ssid\": \"" + document.getElementById('ssid').value + "\"}"
-			ajax(postData)
-		}
 		function toast(msg, subMsg) {
 			document.getElementById('responseMsg').innerText = msg
 			document.getElementById('subMsg').innerText = subMsg || ''
 			toggleToast(true)
+		}
+		function loading(state) {
+			var wapper = document.getElementById('loadWapper')
+			var load = document.getElementById('loading')
+			if (state) {
+				wapper.classList.add('show')
+				setTimeout(() => {
+					load.classList.add('show')
+				}, 20)
+				var msgs = document.getElementsByClassName('msg-r')
+				var index = 0,len = msgs.length
+				id.push(setInterval(() => {
+					for(var i=0;i<len;i++){
+						msgs[i].classList.remove('hide')
+						msgs[i].classList.remove('out')
+						msgs[i].classList.remove('in')
+					}
+					console.log(index)
+					msgs[index].classList.add('out')
+					msgs[index-1<0?len-1:index-1].classList.add('hide')
+					index=index+1==len?0:index+1
+					msgs[index].classList.add('in')
+				}, 3000))
+			} else {
+				load.classList.remove('show')
+				setTimeout(() => {
+					wapper.classList.remove('show')
+				}, 400)
+				while(id.length){
+					clearInterval(id.pop())
+				}
+			}
+		}
+		function setConfig() {
+			loading(true)
+			ajax({
+				url: 'http://192.168.8.1/config?=' + Math.random(),
+				method: 'post',
+				data:"{\"pwd\": \"" + document.getElementById('pwd').value + "\",\"ssid\": \"" + document.getElementById('ssid').value + "\"}"})
 		}
 	</script>
 </body>

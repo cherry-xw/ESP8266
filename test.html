@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>测试</title>
+</head>
+<body>
+  <style>
+    @keyframes rotateMsgHide {
+			0% { transform: rotateX(-90deg);display: block;}
+			38% { transform: rotateX(-75deg); }
+			60% { transform: rotateX(-90deg); display: none;}
+			100% {transform: rotateX(-180deg); display: none; }
+		}
+    .red {
+      background: red;
+      width: 60px;
+      height: 30px;
+      backface-visibility: hidden;
+      animation: rotateMsgHide 10s infinite;
+    }
+  </style>
+  <div class="red">234567890-</div>
+</body>
+</html>
