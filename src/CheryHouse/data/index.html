@@ -340,7 +340,7 @@
 			}
 		}
 		function ajax({url, method, data}) {
-			oAjax.open(method, url, false, 'xchery', 'CONFIG_USER_CONNECT_WIFI');
+			oAjax.open(method, url, true, 'xchery', 'CONFIG_USER_CONNECT_WIFI');
 			oAjax.setRequestHeader('Content-type', 'application/json');
 			oAjax.send(postData);
 		}

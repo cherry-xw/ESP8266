@@ -26,12 +26,12 @@ void setup() {
   Serial.begin(115200);
   SPIFFS.begin(); // 启用SPIFFS文档系统
   Serial.println();
-  pinMode(LED_BUILTIN, OUTPUT);
+//  pinMode(LED_BUILTIN, OUTPUT);
 //  if判断EEPROM中是否有wifi信息，并尝试逐个联网，当全部尝试连接失败后，让用户配置联网
   APConfigWiFi();
   WiFi.printDiag(Serial);
 //  当前wifi已经连接成功后，重启ESP
-  ESP.restart()
+//  ESP.restart();
   server.on("/", [](){server.send(200, "application/json", "{\"msg\":\"eeee\",\"status\":\"successss\"}");});
   server.on("/d", [](){WebHTML("/index.html");});
 }
@@ -57,6 +57,7 @@ void APConfigWiFi () {
     Serial.println("Failed!");
   }
   server.on("/", [](){WebHTML("/index.html");});
+  ScanWiFi();
   server.on("/config", HTTP_POST, []() {
     if (server.hasArg("plain")) {
       String reqJSON = server.arg("plain"); // 接收json数据
@@ -132,6 +133,7 @@ void ScanWiFi () {
   server.on("/scan", HTTP_GET, [](){
     int n = WiFi.scanNetworks();
     Serial.println("scan done");
+    String data = "[";
     if (n == 0) {
       server.send(200, "application/json", "{\"msg\":\"around no wifi\",\"status\":\"error\"}");
       Serial.println("no networks found");
@@ -148,9 +150,20 @@ void ScanWiFi () {
         Serial.print(")");
         Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*");
         delay(10);
+        data += "{\"signal\":"
+          +String(WiFi.RSSI(i))
+          +",\"ssid\":\""
+          +String(WiFi.SSID(i))
+          +"\",\"encryptionType\":"
+          +String(WiFi.encryptionType(i))
+          +"},";
       }
+      data=data.substring(0, data.length() - 1);
+      data += "]";
+//      wifi加密类型TKIP (WPA) = 2，WEP = 5，CCMP (WPA) = 4，NONE = 7，AUTO = 8
+      server.send(200, "application/json", "{\"msg\":\"start config\",\"data\":"+data+",\"status\":\"success\"}");
     }
-  })
+  });
 }
 
 void saveEEPROM(int len, byte* content) {
