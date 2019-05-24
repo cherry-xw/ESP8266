@@ -57,7 +57,7 @@ void APConfigWiFi () {
     Serial.println("Failed!");
   }
   server.on("/", [](){WebHTML("/index.html");});
-  ScanWiFi();
+  commonService();
   server.on("/config", HTTP_POST, []() {
     if (server.hasArg("plain")) {
       String reqJSON = server.arg("plain"); // 接收json数据
@@ -129,27 +129,14 @@ boolean connectWiFi (const char* ssid, const char* pwd) {
   }
 }
 
-void ScanWiFi () {
+void commonService () {
   server.on("/scan", HTTP_GET, [](){
     int n = WiFi.scanNetworks();
-    Serial.println("scan done");
     String data = "[";
     if (n == 0) {
-      server.send(200, "application/json", "{\"msg\":\"around no wifi\",\"status\":\"error\"}");
-      Serial.println("no networks found");
+      server.send(200, "application/json", "{\"msg\":\"around no wifi\",\"status\":\"success\"}");
     } else {
-      Serial.print(n);
-      Serial.println(" networks found");
       for (int i = 0; i < n; ++i) {
-        // Print SSID and RSSI for each network found
-        Serial.print(i + 1);
-        Serial.print(": ");
-        Serial.print(WiFi.SSID(i));
-        Serial.print(" (");
-        Serial.print(WiFi.RSSI(i));
-        Serial.print(")");
-        Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*");
-        delay(10);
         data += "{\"signal\":"
           +String(WiFi.RSSI(i))
           +",\"ssid\":\""
@@ -161,7 +148,7 @@ void ScanWiFi () {
       data=data.substring(0, data.length() - 1);
       data += "]";
 //      wifi加密类型TKIP (WPA) = 2，WEP = 5，CCMP (WPA) = 4，NONE = 7，AUTO = 8
-      server.send(200, "application/json", "{\"msg\":\"start config\",\"data\":"+data+",\"status\":\"success\"}");
+      server.send(200, "application/json", "{\"msg\":\"wifi msgs\",\"data\":"+data+",\"status\":\"success\"}");
     }
   });
 }
