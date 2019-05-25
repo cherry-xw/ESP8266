@@ -153,9 +153,45 @@ void commonService () {
   });
 }
 
-void saveEEPROM(int len, byte* content) {
-  EEPROM.begin(len); // 最长32位ssid，16位pwd
-  for(int i = 0; i < len; i++){
-    
+// 获取配置信息
+void getE2pConf () {
+  EEPROM.get(E2P_LENGTH, conf);
+}
+
+//重置配置区域数据
+void resetE2pConf () {
+  Serial.println(conf.loc.save);
+  Serial.println(conf.loc.next);
+  EEPROM.begin(E2P_LENGTH);
+  for(int i = addr; i < len; i++){
+    EEPROM.write(i, byteArr[i]);
   }
 }
+
+// 起始存储位置， 被存入的String
+void save_string_to_eeprom(int addr, String str){
+//  申请操作到地址strlen(b)（比如你只需要读写地址为100上的一个字节，该处也需输入参数101），最后一个字符为\0结束符
+  int len = strlen(str.c_str()) + 1 + addr;
+//  将char数组转为byte数组（好像不转换也能存）
+  byte byteArr[len];
+  str.getBytes(byteArr, len);
+//  EEPROM写入的数据量
+  EEPROM.begin(len);
+  for(int i = addr; i < len; i++){
+    EEPROM.write(i, byteArr[i]);
+//    直接存入char数组
+//    EEPROM.write(i, str[i]);
+  }
+  EEPROM.commit();
+}
+
+
+//  起始坐标，读取数据长度
+String read_string_from_eeprom(int addr, int len){
+  byte arr[len];
+  for(int i = addr; i < len+addr; i++){
+    arr[i]=EEPROM.read(i);
+  }
+  return String((char *)arr);
+}
+
