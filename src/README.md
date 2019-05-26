@@ -1,11 +1,13 @@
 # ESP8266介绍
   首先，认识一下ESP8266-12F的引脚定义，通常会隐藏最下面一行的pin6-pin11，如下图：
 
-  ![ESP8266-12F 引脚图](./image/ESP-12F部分引脚图.png)
+  ![ESP8266-12F 引脚图](../image/ESP-12F部分引脚图.png)
+
+  ![ESP8266-12F 引脚图完整](../image/ESP-12F引脚图.png)
 
   完整的引脚图如下：
 
-  ![ESP8266-12F 引脚图完整](./image/ESP-12F引脚图.png)
+  ![ESP826612F 340G](../image/NodeMcu引脚映射图.png)
 
   通过引脚图可知：
     1. 12F共有22个引脚，共包含GPIO0-GPIO16共17个引脚。但是得注意有些IO口还可以完成其他功能（也叫做引脚复用），诸如Serial、I2C、SPI，由相应的函数库完成
@@ -40,11 +42,40 @@
   |SD3|GPIO10|无|尽量不用|
   |A0|ADC|无|可用|
   从上面表格可以看出，我们大约11个GPIO引脚可用。而11个中的2个引脚通常被保留用于RX和TX，以便进行串口通信。因此最后，只剩下8个通用I / O引脚，即D0到D8（除开D3特殊用途）。
+
   请注意，D0 / GPIO16引脚只能用作GPIO读/写，不支持特殊功能（PWM）
+  
   在Arduino，编号前带有“A”的引脚是模拟输入引脚，Arduino可以读取这些引脚上输入的模拟值，也就是可以读取引脚上输入的电压大小。模拟输入引脚带有ADC功能（ADC：Analog-to-Digital Converter 模数转换）。它可以将外部输入的模拟信号转换为芯片运算时可以识别的数字信号，从而实现读取模拟值的功能。
 
   Ardunio与计算机通信最常用的方式就是串口通信。在Arduino控制器上，串口都是位于Rx和Tx两个引脚
   
+## ESP.restart() 重启
+当它重新启动时，需要检查GPIO0和GPIO15和GPIO2的状态
+|GPIO15|GPIO0|GPIO2	Mode|
+|:---:|:---:|:---:|:---:|
+|0V|0V|3.3V|Uart Bootloader(烧录模式)|
+|0V|3.3V|3.3V|Boot sketch(运行模式)|
+|3.3V|x|x|SDIO mode (not used for Arduino)|
+串口连接电脑运行时，执行restart后
+
+成功
+```
+tail 8
+chksum 0x2d
+csum 0x2d
+vbb28d4a3
+~ld    <------ this means it work
+```
+失败
+```
+ ets Jan  8 2013,rst cause:4, boot mode:(1,7)
+ ets Jan  8 2013,rst cause:2, boot mode:(1,7)
+
+ wdt reset    <----- this means it does not work
+```
+参考： 1. [https://github.com/esp8266/Arduino/issues/1017](https://github.com/esp8266/Arduino/issues/1017)
+      2. [https://github.com/esp8266/Arduino/issues/1722](https://github.com/esp8266/Arduino/issues/1722)
+
 ### 参考文章
   dalao文章
   [单片机菜鸟](https://www.arduino.cn/thread-82353-1-1.html)

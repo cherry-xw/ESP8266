@@ -22,31 +22,17 @@ ESP8266WebServer server(80);
 
 
 
-
 // ********************************** define **********************************************
 
-#define E2P_LENGTH 9 // e2pconf长度
-#define WIFI_MAX 8 // 存储账号数量
-#define EACH_YFI_LENGTH 55 // 每个账号+密码长度
-#define CONF_MAX_LENGTH 491 // 配置+账号最大长度
 struct {
-  unsigned int use; // 当前已经使用的EEPROM
-  byte save; // 已经保存的wifi数量，最多10个
-  byte next; // 当前将被修改的wifi账号，修改完后必须自增一次,如果save小于8，则next==save，当save==8时，则在0-7之间循环
-  // 8266中的整型int 包含4个字节byte，每个字节8位bit，共计32位
-  // ssid最长为11个中文（32英文数字）
-  // pwd最长16位字母数字符号， 16字节
-  // 加上eeprom结束符共计49字节
-  // 起始配置描述占用7字节，8个wifi信息占用392，总计399字节
-} conf;
-
-struct {
+  byte key; // 用于是否经过初始化判断
   char ssid[32];
   char pwd[16];
-} yfi;
+} conf;
 
 boolean status = false; // 当前wifi连接状态
-boolean led = false; // 状态信号灯状态
+boolean led = true; // 状态信号灯状态
+
 
 
 
@@ -62,40 +48,26 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   readE2pConf();
   // 判断是否乱码初始值或为空，以此判断是否重置内容，并直接进入配置模式
-  if (conf.use != CONF_MAX_LENGTH || conf.save > WIFI_MAX || conf.next > WIFI_MAX || conf.next > conf.save) {
+  if (conf.key != 179) {
+//    说明是第一次使用
     resetE2pConf();
     // 同时设备直接进入配置wifi状态，而不是进入正常运行状态
     APConfigWiFi();
+  } else if (conf.key == 179 && String(conf.ssid).equals("TP-LINK_205A")) {
+//    说明使用过，但是未连接
+      APConfigWiFi();
   } else {
     // if判断EEPROM中是否有wifi信息，并尝试逐个联网，当全部尝试连接失败后，让用户配置联网
-    // 根据conf.save值，尝试连接周围wifi
+    // 根据conf.save值遍历conf. a~g，尝试连接周围wifi
     // 扫描周围ssid，如果发现相同ssid，直接连接，如果失败或者未找到相同，则继续尝试下一个，如果全部失败，则进入配置模式。
     
     WiFi.mode(WIFI_STA);
-    byte n = WiFi.scanNetworks(); // 扫描所有的WiFi信息
-    byte i,j;
-    Serial.print("Start auto connect, scan=");
-    Serial.println(n);
-    for (i=0;i<conf.save;i++){
-      Serial.print("i times=");
-      Serial.println(i);
-//      每次获取一个账号密码
-      readE2pYfi(i);
-      Serial.println(yfi.ssid);
-      Serial.println(yfi.pwd);
-      for (j=0;j<n;j++){
-        Serial.print("j times=");
-        Serial.println(j);
-        if (String(WiFi.SSID(i)).equals(String(yfi.ssid))){ // 如果周围wifi与保存wifi存在相同名称，尝试一次联网
-          if(connectWiFi(yfi.ssid, yfi.pwd)) break; // 如果连接成功直接结束for循环
-        }
-      }
-    }
-    Serial.println("auto connect done");
-    if (i == conf.save){ // 如果全部尝试后还是连接失败，启动配置模式
-      Serial.println("no yfi connect success");
+    Serial.print("Start auto connect");
+    if (!connectWiFi(conf.ssid, conf.pwd)){
+      Serial.println("auto connect error");
       APConfigWiFi();
     }
+    Serial.println("auto connect done");
   }
   controlListon();
 }
@@ -190,8 +162,8 @@ void APConfigWiFi () {
         server.send(400, "application/json", "{\"msg\":\""+strErr+"\",\"status\":\"error\"}");
         return;
       }
-      String pwd = doc["pwd"];
       String ssid = doc["ssid"];
+      String pwd = doc["pwd"];
       Serial.println("ssid: " + ssid + " pwd: " + pwd);
       if (pwd.equals("null") || ssid.equals("null") || pwd.equals("") || ssid.equals("")) {
         server.send(400, "application/json", "{\"msg\":\"ssid or password is empty\",\"status\":\"error\"}");
@@ -202,19 +174,18 @@ void APConfigWiFi () {
 //      如果配置失败，那么就会重新回到快速闪烁状态
 //      配置成功，指示灯慢闪
       server.send(200, "application/json", "{\"msg\":\"start config\",\"status\":\"success\"}");
-      if (!connectWiFi(ssid.c_str(), pwd.c_str())) { // 连接成功
+      if (connectWiFi(ssid.c_str(), pwd.c_str())) { // 连接成功
 //        将wifi信息保存起来
-        strcpy(yfi.ssid, ssid.c_str());
-        strcpy(yfi.pwd, pwd.c_str());
-        Serial.println("ssid pwd");
-        saveE2pYfi(conf.next);
-        if (conf.save <= WIFI_MAX) conf.save++;
-        conf.next++;
-        if (conf.next == WIFI_MAX) conf.next = 0;
+        strcpy(conf.ssid, ssid.c_str());
+        strcpy(conf.pwd, pwd.c_str());
         saveE2pConf();
 //        当前wifi已经连接成功后，重启ESP
-//        delay(2000);
-//        ESP.restart();
+        delay(4000);
+        Serial.println("to restart");
+        WiFi.forceSleepBegin();
+        wdt_reset();
+        ESP.restart();
+        while(1)wdt_reset();
 //        WiFi.mode(WIFI_STA); // 在成功之后切换模式，防止通讯中断
 //        status = true;
       } else { // 连接超时
@@ -246,7 +217,7 @@ boolean connectWiFi (const char* ssid, const char* pwd) {
     Serial.println(F("WiFi connected"));
     Serial.print("current IP is ");
     Serial.println(WiFi.localIP().toString());
-    return false;
+    return true;
   } else {
     WiFi.disconnect();
     Serial.println(F("connect timeout"));
@@ -266,72 +237,34 @@ boolean connectWiFi (const char* ssid, const char* pwd) {
 // 最大缓存为4k！！！ 共计4096个byte
 // 存储范围为4~4096之间
 
+void resetE2pConf(){
+  Serial.println("reset conf");
+  conf.key = 179;
+  strcpy(conf.ssid, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  strcpy(conf.pwd, "1111111111111111");
+  saveE2pConf();
+}
+
 // 获取配置信息
 void readE2pConf () {
-  EEPROM.begin(E2P_LENGTH);
-  int len = sizeof(conf);
+  EEPROM.begin(49);
+  
   uint8_t *p = (uint8_t*)(&conf);
-  for (int i = 0; i < len; i++){
+  for (int i = 0; i < 49; i++){
     *(p + i) = EEPROM.read(i);
   }
   EEPROM.end();
   Serial.println("getConfig");
-  Serial.println(conf.use);
-  Serial.println(conf.save);
-  Serial.println(conf.next);
-}
-
-//重置配置区域数据
-void resetE2pConf () {
-  Serial.println("reset conf");
-  conf.use = CONF_MAX_LENGTH;
-  conf.save = 0;
-  conf.next = 0;
-  saveE2pConf();
+  Serial.println(conf.ssid);
+  Serial.println(conf.pwd);
 }
 
 // 保存配置区域数据
 void saveE2pConf () {
-  int len = sizeof(conf);
-  Serial.println("save conf");
-  EEPROM.begin(E2P_LENGTH);
+  EEPROM.begin(49);
   uint8_t *p = (uint8_t*)(&conf);
-  for (int i = 0; i < len; i++) {
+  for (int i = 0; i < 49; i++) {
     EEPROM.write(i, *(p + i));
-  }
-  EEPROM.commit();
-  EEPROM.end();
-}
-
-
-// 存取wifi账号密码
-void readE2pYfi (byte index) {
-  int start = index * EACH_YFI_LENGTH + E2P_LENGTH;
-  int len = sizeof(yfi);
-  Serial.println(start);
-  EEPROM.begin(CONF_MAX_LENGTH);
-  uint8_t *p = (uint8_t*)(&yfi);
-  for (int i = 0,j=0; j < len+start; i++,j++){
-//    *(p + j) = EEPROM.read(i);
-    Serial.print(EEPROM.read(i));
-    Serial.print("_");
-  }
-  EEPROM.end();
-}
-void saveE2pYfi (byte index) {
-  Serial.println(yfi.ssid);
-  Serial.println(yfi.pwd);
-  Serial.println(index);
-  int start = index * EACH_YFI_LENGTH + E2P_LENGTH;
-  int len = sizeof(yfi);
-  Serial.print("yfi len = ");
-  Serial.println(len);
-  EEPROM.begin(CONF_MAX_LENGTH);
-  uint8_t *p = (uint8_t*)(&yfi);
-  for (int i = start,j=0; j < len; i++,j++) {
-    Serial.print(yfi.ssid[j]);
-    Serial.print(".");
-    EEPROM.write(i, *(p + j));
   }
   EEPROM.commit();
   EEPROM.end();
