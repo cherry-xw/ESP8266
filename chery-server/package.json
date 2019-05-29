@@ -1,0 +1,30 @@
+{
+  "name": "chery-server",
+  "version": "1.0.0",
+  "description": "mosca mqtt",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cherry-xw/ESP8266.git"
+  },
+  "keywords": [
+    "iot"
+  ],
+  "author": "chery-xw",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cherry-xw/ESP8266/issues"
+  },
+  "homepage": "https://github.com/cherry-xw/ESP8266#readme",
+  "dependencies": {
+    "mosca": "^2.8.3",
+    "mqtt": "^3.0.0"
+  },
+  "devDependencies": {
+    "webpack": "^4.32.2",
+    "webpack-cli": "^3.3.2"
+  }
+}

@@ -24,7 +24,8 @@
   ESP8266-12F与NodeMcu的端口映射关系，如下图
   ![NodeMcu引脚映射图](image/NodeMcu引脚映射图.png)
   图中的蓝色部分表示当前NodeMcu上的接口，外部为对应12F接口。
-  NodeMcu上的CLK、SD0、CMD、SD1、SD2引脚，是用于连接外接flash芯片，不应该用于连接其他模块，悬空即可，以防程序奔溃。  
+  NodeMcu上的CLK、SD0、CMD、SD1、SD2引脚，是用于连接外接flash芯片，不应该用于连接其他模块，悬空即可，以防程序奔溃。
+
   |引脚名称|GPIO引脚号|可复用功能|备注|
   |:---:|:---:|:---:|:---:|
   |D0|GPIO16|无|可用，只能用作GPIO读/写，不支持特殊功能|
@@ -41,6 +42,7 @@
   |SD2|GPIO9|无|尽量不用|
   |SD3|GPIO10|无|尽量不用|
   |A0|ADC|无|可用|
+
   从上面表格可以看出，我们大约11个GPIO引脚可用。而11个中的2个引脚通常被保留用于RX和TX，以便进行串口通信。因此最后，只剩下8个通用I / O引脚，即D0到D8（除开D3特殊用途）。
 
   请注意，D0 / GPIO16引脚只能用作GPIO读/写，不支持特殊功能（PWM）
@@ -51,11 +53,13 @@
   
 ## ESP.restart() 重启
 当它重新启动时，需要检查GPIO0和GPIO15和GPIO2的状态
-|GPIO15|GPIO0|GPIO2	Mode|
+
+|GPIO15|GPIO0|GPIO2|Mode|
 |:---:|:---:|:---:|:---:|
 |0V|0V|3.3V|Uart Bootloader(烧录模式)|
 |0V|3.3V|3.3V|Boot sketch(运行模式)|
 |3.3V|x|x|SDIO mode (not used for Arduino)|
+
 串口连接电脑运行时，执行restart后
 
 成功
